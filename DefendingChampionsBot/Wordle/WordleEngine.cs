@@ -25,13 +25,14 @@ namespace DefendingChampionsBot.Wordle
             string prompt = BuildPromptFromHistory(wordleDto);
             logger.LogInfo(prompt);
 
-            ChatClient chat = Client.GetChatClient(OpenAIModel.GPT5_Mini.ToModelString());
-
-            var result = await chat.CompleteChatAsync(
+            ChatClient gpt5_Mini_Chat = Constants.GPT5_Mini;
+            ChatCompletionOptions options = Constants.ChatCompletionOptions;
+            var result = await gpt5_Mini_Chat.CompleteChatAsync(
                 messages:
                 [
                     ChatMessage.CreateUserMessage(prompt)
                 ],
+                options,
                 cancellationToken: cts.Token
             );
 

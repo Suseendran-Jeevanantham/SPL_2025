@@ -23,6 +23,7 @@ namespace DefendingChampionsBot
         public static readonly ChatClient GPT4o = Client.GetChatClient(OpenAIModel.GPT4o.ToModelString());
         public static readonly ChatClient GPT4_1 = Client.GetChatClient(OpenAIModel.GPT4_1.ToModelString());
 
+        public static readonly string SystemMessage = "You are solving a Wordle-like game.";
         public static readonly ChatCompletionOptions ChatCompletionOptions = new ChatCompletionOptions()
         {
 #pragma warning disable OPENAI001

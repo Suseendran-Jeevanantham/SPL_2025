@@ -30,6 +30,7 @@ namespace DefendingChampionsBot.Wordle
             var result = await gpt5_Mini_Chat.CompleteChatAsync(
                 messages:
                 [
+                    Constants.SystemMessage,
                     ChatMessage.CreateUserMessage(prompt)
                 ],
                 options,
@@ -51,7 +52,6 @@ namespace DefendingChampionsBot.Wordle
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine("You are solving a Wordle-like game.");
             sb.AppendLine($"Word length: {wordleDto.WordLength}");
             sb.AppendLine($"Attempt number: {wordleDto.CurrentAttempt}");
             sb.AppendLine($"Max attempts: {wordleDto.MaxAttempts}");

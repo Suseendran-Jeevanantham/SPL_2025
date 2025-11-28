@@ -4,6 +4,7 @@ using System.IO;
 using OpenAI.Chat;
 using System.Linq;
 using System.Text.Json;
+using System.Diagnostics;
 
 namespace DefendingChampionsBot.Raven
 {
@@ -294,7 +295,8 @@ namespace DefendingChampionsBot.Raven
             ChatCompletionOptions options = Constants.ChatCompletionOptions;
             string prompt = ravenGameInfo.GenerateUserPrompt(isMorning);
             logger.LogInfo(prompt);
-
+            Stopwatch st = new Stopwatch();
+            st.Start();
             var result = await gpt5_Mini_Chat.CompleteChatAsync(
                 messages:
                 [
@@ -304,7 +306,8 @@ namespace DefendingChampionsBot.Raven
                 options,
                 cancellationToken: cts.Token
             );
-
+            st.Stop();
+            logger.LogInfo($"Time taken: {st.Elapsed.TotalSeconds} seconds");
             ChatCompletion? message = result?.Value;
 
             string vote = message.Content.First().Text.Trim().ToUpper();

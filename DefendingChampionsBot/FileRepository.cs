@@ -27,6 +27,11 @@ namespace DefendingChampionsBot
 
                 foreach (var playerComment in ravenGameInfo.PlayerComments)
                 {
+                    if (playerComment.PlayerId == ravenGameInfo.MyId)
+                    {
+                        continue;
+                    }
+
                     if (ravenGameInfo.Ravens.Contains(playerComment.PlayerId))
                     {
                         CaptureRavenLogs(playerComment.Comment!.ToString()!);

@@ -11,6 +11,7 @@ namespace DefendingChampionsBot.Raven
     public class RavenEngine
     {
         public Logger logger;
+        public Random Random = new();
         public RavenEngine(Logger logger)
         {
             this.logger = logger;
@@ -344,7 +345,42 @@ namespace DefendingChampionsBot.Raven
 
         private object GenerateCommentBasedOnRole(string myRole)
         {
-            return "I am voting";
+            var votePhrases = new List<string>
+            {
+                "Locking in my decision now.",
+                "Putting my vote on the table.",
+                "My choice is set.",
+                "Casting my pick for this round.",
+                "My decision is finalized.",
+                "Dropping my vote.",
+                "Logging my selection.",
+                "Submitting my final choice.",
+
+                "Alright, here’s my vote.",
+                "I’m going with this one.",
+                "This is who I’m choosing.",
+                "Okay, I’ve made up my mind.",
+                "I’m sticking with this choice.",
+                "I’m picking my side now.",
+                "This is where I’m leaning.",
+
+                "The die is cast — here’s my vote.",
+                "I choose… this player.",
+                "My verdict is ready.",
+                "The time has come. My vote goes here.",
+                "My judgment is made.",
+                "Let fate decide — my vote is placed.",
+                "I commit my choice!",
+
+                "I pick them.",
+                "I vote here.",
+                "My choice: locked.",
+                "I choose this person.",
+                "I’m voting now."
+            };
+
+            int index = Random.Next(votePhrases.Count);
+            return votePhrases[index];
         }
 
         public Dictionary<string, object> GetDefaultReturnValue(RavenDto ravenDto)

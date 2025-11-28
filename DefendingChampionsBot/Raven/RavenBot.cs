@@ -141,6 +141,7 @@ namespace DefendingChampionsBot.Raven
                         return;
 
                     case "game-result":
+                        new FileRepository().ProcessComments(ravenDto, logger);
                         RavenWarehouse.TryRemoveGameInfo(ravenDto.GameId!);
                         return;
 

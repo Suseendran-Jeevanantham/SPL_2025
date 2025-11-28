@@ -58,7 +58,7 @@ namespace DefendingChampionsBot.Raven
         public List<string> AllPlayers { get; set; } = new();
         public List<string> PlayersAlive { get; set; } = new();
         public List<string> PlayersDead { get; set; } = new();
-        public List<string> PlayerComments { get; set; } = new();
+        public List<PlayerCommentInfo> PlayerComments { get; set; } = new();
 
         public string GenerateUserPrompt(bool isMorning)
         {
@@ -139,7 +139,7 @@ Important: Respond with exactly ONE PlayerId from the provided data.";
             sb.AppendLine("PlayerComments:");
             foreach (var comment in PlayerComments)
             {
-                sb.AppendLine(comment);
+                sb.AppendLine(comment.PlayerId + ": " + comment.Comment);
             }
 
             logger.LogInfo(sb.ToString());
@@ -149,5 +149,11 @@ Important: Respond with exactly ONE PlayerId from the provided data.";
         {
             return list.Count == 0 ? "(none)" : string.Join(", ", list);
         }
+    }
+
+    public class PlayerCommentInfo
+    {
+        public string PlayerId { get; set; }
+        public string Comment { get; set; }
     }
 }

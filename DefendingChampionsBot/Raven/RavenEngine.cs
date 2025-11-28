@@ -168,7 +168,11 @@ namespace DefendingChampionsBot.Raven
 
                 try
                 {
-                    ravenGameInfo.PlayerComments.Add($"{playerId!.ToString()} said {comment!.ToString()}. Votes: {string.Join(", ", JsonSerializer.Deserialize<List<string>>((string)votes!))}");
+                    ravenGameInfo.PlayerComments.Add(new PlayerCommentInfo()
+                    {
+                        PlayerId = playerId.ToString(),
+                        Comment = $"{comment!.ToString()}"
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -234,6 +238,10 @@ namespace DefendingChampionsBot.Raven
                     else
                     {
                         ravenGameInfo.PlayersDead.Add(pl["id"].ToString()!);
+                        if ((string)pl["lynchedBy"] == "Raven")
+                        {
+                            ravenGameInfo.Villagers.Add(pl["id"].ToString()!);
+                        }
                     }
                 }
             }

@@ -57,10 +57,12 @@ Rules:
 3. Never return MyId as the answer.
 4. Do NOT include explanations, reasoning, or extra text.
 5. If the question is about suggesting a player (e.g., whom to eliminate, investigate, protect, suspect, etc.), choose exactly one PlayerId.
-6. When MyRole is Raven, prioritize eliminating Doctor/Detective before Villager.
-7. When MyRole is Detective, do not pick Villagers, do not pick dead players, and do not return MyId.
-8. Use the game data exactly as provided in the user prompt.
-9. Never create new players or repeat the question.";
+6. When MyRole is Raven, do not pick Raven.
+7. When MyRole is Raven, prioritize eliminating Doctor/Detective before Villager.
+8. When MyRole is Detective, do not pick Villagers, do not pick dead players, and do not return MyId.
+9. Use the game data exactly as provided in the user prompt.
+10. Never return MyId.
+11. Never create new players or repeat the question.";
         }
     }
 }

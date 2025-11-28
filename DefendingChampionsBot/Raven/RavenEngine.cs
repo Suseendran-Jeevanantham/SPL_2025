@@ -322,12 +322,22 @@ namespace DefendingChampionsBot.Raven
 
             if (!ravenGameInfo.PlayersAlive.Contains(vote))
             {
-                throw new Exception($"Invalid vote {vote}");
+                throw new Exception($"Error: Invalid vote {vote}");
             }
 
-            if (ravenGameInfo.MyRole == "Raven" && !isMorning)
+            if (ravenGameInfo.MyRole == "Raven")
             {
-                AppendAliveVillagers(msg, ravenGameInfo);
+                if (!isMorning)
+                {
+                    AppendAliveVillagers(msg, ravenGameInfo);
+                }
+                else
+                {
+                    if (ravenGameInfo.Ravens.Contains(vote))
+                    {
+                        throw new Exception($"Error: Selected Raven {vote}");
+                    }
+                }
             }
 
             return msg;

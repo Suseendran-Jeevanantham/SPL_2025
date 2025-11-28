@@ -1,7 +1,7 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using DefendingChampionsBot;
-using DefendingChampionsBot.Wordle;
+using DefendingChampionsBot.Raven;
 
 internal class Program
 {
@@ -38,7 +38,8 @@ internal class Program
                     string msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
                     _ = Task.Run(() =>
                     {
-                        new WordleBot().HandleRequest(ws, msg);
+                        new RavenBot().HandleRequest(ws, msg);
+                        // new WordleBot().HandleRequest(ws, msg);
                     });
                 }
                 catch (OperationCanceledException)

@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 
 namespace DefendingChampionsBot.Raven
 {
@@ -82,126 +83,129 @@ namespace DefendingChampionsBot.Raven
 
         public void Log(Logger logger)
         {
-            logger.LogInfo("\n================= 🧩 PARSED MESSAGE =================");
-            logger.LogInfo($"Type           : {Type}");
-            logger.LogInfo($"Match ID       : {MatchId}");
-            logger.LogInfo($"Game ID        : {GameId}");
-            logger.LogInfo($"Your ID        : {YourId}");
+            var sb = new StringBuilder();
 
-            if (Day != null) logger.LogInfo($"Day            : {Day}");
-            if (Phase != null) logger.LogInfo($"Phase          : {Phase}");
-            if (Timeout != null) logger.LogInfo($"Timeout (s)    : {Timeout}");
-            if (FirstVoteTimeout != null) logger.LogInfo($"First Vote TO  : {FirstVoteTimeout}");
-            if (TimeRemaining != null) logger.LogInfo($"Time Remaining : {TimeRemaining}");
-            if (!string.IsNullOrEmpty(Otp)) logger.LogInfo($"OTP            : {Otp}");
+            sb.AppendLine("\n================= 🧩 PARSED MESSAGE =================");
+            sb.AppendLine($"Type           : {Type}");
+            sb.AppendLine($"Match ID       : {MatchId}");
+            sb.AppendLine($"Game ID        : {GameId}");
+            sb.AppendLine($"Your ID        : {YourId}");
+
+            if (Day != null) sb.AppendLine($"Day            : {Day}");
+            if (Phase != null) sb.AppendLine($"Phase          : {Phase}");
+            if (Timeout != null) sb.AppendLine($"Timeout (s)    : {Timeout}");
+            if (FirstVoteTimeout != null) sb.AppendLine($"First Vote TO  : {FirstVoteTimeout}");
+            if (TimeRemaining != null) sb.AppendLine($"Time Remaining : {TimeRemaining}");
+            if (!string.IsNullOrEmpty(Otp)) sb.AppendLine($"OTP            : {Otp}");
 
             switch (Type)
             {
                 // GAME START
                 case "game-start":
-                    logger.LogInfo($"Your Role      : {YourRole}");
-                    logger.LogInfo($"Ravens         : {RavenCount}");
-                    logger.LogInfo($"Detectives     : {DetectiveCount}");
-                    logger.LogInfo($"Doctors        : {DoctorCount}");
-                    logger.LogInfo($"Villagers      : {VillagerCount}");
+                    sb.AppendLine($"Your Role      : {YourRole}");
+                    sb.AppendLine($"Ravens         : {RavenCount}");
+                    sb.AppendLine($"Detectives     : {DetectiveCount}");
+                    sb.AppendLine($"Doctors        : {DoctorCount}");
+                    sb.AppendLine($"Villagers      : {VillagerCount}");
                     break;
 
                 // PLAYER STATUS
                 case "player-status":
-                    logger.LogInfo("All Players    :");
+                    sb.AppendLine("All Players    :");
                     foreach (var pl in AllPlayers)
                     {
-                        logger.LogInfo($"  - {FormatDict(pl)}");
+                        sb.AppendLine($"  - {FormatDict(pl)}");
                     }
                     break;
 
                 // PHASE RESULT
                 case "phase-result":
-                    logger.LogInfo($"Player Lynched : {PlayerLynched}");
+                    sb.AppendLine($"Player Lynched : {PlayerLynched}");
                     break;
 
                 // ACK
                 case "ack":
-                    logger.LogInfo($"Request Status : {RequestStatus}");
+                    sb.AppendLine($"Request Status : {RequestStatus}");
                     break;
 
                 // NIGHT DISCUSSION
                 case "night-discussion":
-                    logger.LogInfo($"Villagers Alive: {string.Join(", ", VillagersAlive)}");
+                    sb.AppendLine($"Villagers Alive: {string.Join(", ", VillagersAlive)}");
                     break;
 
                 // RAVEN COMMENT
                 case "raven-comment":
-                    logger.LogInfo("Discussions    :");
+                    sb.AppendLine("Discussions    :");
                     foreach (var d in Discussions)
                     {
                         d.TryGetValue("playerId", out var playerId);
                         d.TryGetValue("comment", out var comment);
                         d.TryGetValue("votes", out var votes);
-                        logger.LogInfo($"  - {playerId}: {comment} (votes={votes})");
+                        sb.AppendLine($"  - {playerId}: {comment} (votes={votes})");
                     }
                     if (Votes.Count > 0)
-                        logger.LogInfo($"Last Votes     : [{string.Join(", ", Votes)}]");
+                        sb.AppendLine($"Last Votes     : [{string.Join(", ", Votes)}]");
                     break;
 
                 // MORNING DISCUSSION
                 case "morning-discussion":
-                    logger.LogInfo($"Players Alive  : {string.Join(", ", PlayersAlive)}");
+                    sb.AppendLine($"Players Alive  : {string.Join(", ", PlayersAlive)}");
                     break;
 
                 // MORNING PLAYER COMMENT
                 case "morning-player-comment":
-                    logger.LogInfo("Discussions    :");
+                    sb.AppendLine("Discussions    :");
                     foreach (var d in Discussions)
                     {
                         d.TryGetValue("playerId", out var playerId);
                         d.TryGetValue("comment", out var comment);
                         d.TryGetValue("votes", out var votes);
-                        logger.LogInfo($"  - {playerId}: {comment} (votes={votes})");
+                        sb.AppendLine($"  - {playerId}: {comment} (votes={votes})");
                     }
                     if (Votes.Count > 0)
-                        logger.LogInfo($"Last Votes     : [{string.Join(", ", Votes)}]");
+                        sb.AppendLine($"Last Votes     : [{string.Join(", ", Votes)}]");
                     break;
 
                 // NIGHT INVESTIGATION
                 case "night-investigation":
-                    logger.LogInfo($"Players Alive        : {string.Join(", ", PlayersAlive)}");
-                    logger.LogInfo($"Identified Ravens    : {string.Join(", ", IdentifiedRaven)}");
-                    logger.LogInfo($"Identified Villagers : {string.Join(", ", IdentifiedVillager)}");
+                    sb.AppendLine($"Players Alive        : {string.Join(", ", PlayersAlive)}");
+                    sb.AppendLine($"Identified Ravens    : {string.Join(", ", IdentifiedRaven)}");
+                    sb.AppendLine($"Identified Villagers : {string.Join(", ", IdentifiedVillager)}");
                     break;
 
                 // NIGHT PROTECTION
                 case "night-protection":
-                    logger.LogInfo($"Players Alive  : {string.Join(", ", PlayersAlive)}");
+                    sb.AppendLine($"Players Alive  : {string.Join(", ", PlayersAlive)}");
                     break;
 
                 // ACK NIGHT INVESTIGATION
                 case "ack-night-investigation":
-                    logger.LogInfo($"Investigated   : {string.Join(", ", Investigated)}");
-                    logger.LogInfo($"Is Raven       : {string.Join(", ", IsRaven)}");
+                    sb.AppendLine($"Investigated   : {string.Join(", ", Investigated)}");
+                    sb.AppendLine($"Is Raven       : {string.Join(", ", IsRaven)}");
                     break;
 
                 // GAME RESULT
                 case "game-result":
-                    logger.LogInfo($"Game Result    : {Result}");
+                    sb.AppendLine($"Game Result    : {Result}");
                     break;
 
                 // UNKNOWN TYPE
                 default:
-                    logger.LogInfo("⚠️ No specific printer for this type; showing raw JSON:");
+                    sb.AppendLine("⚠️ No specific printer for this type; showing raw JSON:");
                     try
                     {
                         var json = JsonSerializer.Deserialize<object>(Raw ?? "");
-                        logger.LogInfo(JsonSerializer.Serialize(json, new JsonSerializerOptions { WriteIndented = true }));
+                        sb.AppendLine(JsonSerializer.Serialize(json, new JsonSerializerOptions { WriteIndented = true }));
                     }
                     catch
                     {
-                        logger.LogInfo(Raw);
+                        sb.AppendLine(Raw);
                     }
                     break;
             }
 
-            logger.LogInfo("=====================================================");
+            sb.AppendLine("=====================================================");
+            logger.LogInfo(sb.ToString());
         }
 
         private string FormatDict(Dictionary<string, object> dict)

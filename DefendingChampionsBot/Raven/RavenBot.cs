@@ -1,7 +1,7 @@
-﻿using System.Net.WebSockets;
-using System.Text.Json;
+﻿using System;
+using System.Net.WebSockets;
 using System.Text;
-using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace DefendingChampionsBot.Raven
 {
@@ -31,21 +31,118 @@ namespace DefendingChampionsBot.Raven
 
                 switch (ravenDto.Type)
                 {
-                    case "morning-discussion":
-                        outgoing = await engine.BuildVoteFromMorningDiscussion(ravenDto);
-                        break;
+                    case "game-start":
+                        await engine.UpdateRavenGameInfoBasedOnGameStart(ravenDto);
+                        return;
+
+                    case "player-status":
+                        await engine.UpdatedRavenGameInfoBasedOnPlayerStatus(ravenDto);
+                        RavenWarehouse.LogGameInfo(ravenDto.GameId!, logger);
+                        return;
 
                     case "night-discussion":
-                        outgoing = await engine.BuildRavenVoteFromNightDiscussion(ravenDto);
+                        await engine.UpdatedRavenGameInfoBasedOnNightDiscussion(ravenDto);
+                        RavenWarehouse.LogGameInfo(ravenDto.GameId!, logger);
+                        try
+                        {
+                            CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds((double)ravenDto.Timeout! - 5));
+                            outgoing = await engine.TakeDecision(ravenDto, false, cts);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            logger.LogInfo("error: night-discussion timed-out");
+                            outgoing = await engine.BuildRavenVoteFromNightDiscussion(ravenDto);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogInfo($"error: unknown exception{ex.Message}");
+                            outgoing = await engine.BuildRavenVoteFromNightDiscussion(ravenDto);
+                        }
                         break;
 
-                    case "night-investigation":
-                        outgoing = await engine.BuildDetectiveVoteFromNightInvestigation(ravenDto);
+                    case "night-investigation":                        
+                        try
+                        {
+                            CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds((double)ravenDto.Timeout! - 5));
+                            outgoing = await engine.TakeDecision(ravenDto, false, cts);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            logger.LogInfo("error: night-investigation timed-out");
+                            outgoing = await engine.BuildDetectiveVoteFromNightInvestigation(ravenDto);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogInfo($"error: unknown exception{ex.Message}");
+                            outgoing = await engine.BuildDetectiveVoteFromNightInvestigation(ravenDto);
+                        }
                         break;
 
                     case "night-protection":
                         outgoing = await engine.BuildDoctorVoteFromNightProtection(ravenDto);
+                        RavenWarehouse.LogGameInfo(ravenDto.GameId!, logger);
                         break;
+
+
+                    case "morning-discussion":
+                        RavenGameInfo ravenGameInfo = RavenWarehouse.GetGameInfo(ravenDto.GameId!);
+                        try
+                        {
+                            if (ravenGameInfo.PlayersAlive!.Count == 2)
+                            {
+                                var msg = engine.GetDefaultReturnValue(ravenDto);
+                                msg["type"] = "vote";
+                                msg["comment"] = "Final blow";
+                                msg["votes"] = ravenGameInfo.PlayersAlive.Except(new List<string> { ravenGameInfo.MyId });
+
+                                outgoing = msg;
+                                break;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogInfo($"Error on last 2 elimination case {ex.Message}");
+                        }
+
+                        try
+                        {
+                            CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds((double)ravenDto.FirstVoteTimeout! - 5));
+                            outgoing = await engine.TakeDecision(ravenDto, true, cts);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            logger.LogInfo("error: morning-discussion timed-out");
+                            outgoing = await engine.BuildVoteFromMorningDiscussion(ravenDto);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogInfo($"error: unknown exception{ex.Message}");
+                            outgoing = await engine.BuildVoteFromMorningDiscussion(ravenDto);
+                        }
+                        break;
+
+                    case "morning-player-comment":
+                        await engine.StoreComments(ravenDto);
+                        RavenWarehouse.LogGameInfo(ravenDto.GameId!, logger);
+                        return;
+
+                    case "raven-comment":
+                        return;
+
+                    case "ack-night-investigation":
+                        await engine.UpdatedRavenGameInfoBasedOnAckNightInvestigation(ravenDto);
+                        RavenWarehouse.LogGameInfo(ravenDto.GameId!, logger);
+                        return;
+
+                    case "ack":
+                        return;
+
+                    case "phase-result":
+                        return;
+
+                    case "game-result":
+                        RavenWarehouse.TryRemoveGameInfo(ravenDto.GameId!);
+                        return;
 
                     default:
                         logger.LogInfo($"No action required for type '{ravenDto.Type}'.");
@@ -63,14 +160,10 @@ namespace DefendingChampionsBot.Raven
 
                 logger.LogInfo("Outgoing");
                 outParsedDto.Log(logger);
+                RavenWarehouse.LogGameInfo(ravenDto.GameId!, logger);
 
                 ArraySegment<byte> buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes(rawOut));
                 await ws.SendAsync(buffer, WebSocketMessageType.Text, endOfMessage: true, CancellationToken.None);
-
-                //string json = JsonSerializer.Serialize(outParsedDto);
-                //var bytes = Encoding.UTF8.GetBytes(json);
-
-                //await ws.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None);
             }
             catch (Exception ex)
             {

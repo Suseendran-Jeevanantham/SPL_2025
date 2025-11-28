@@ -1,5 +1,6 @@
 ﻿using OpenAI;
 using OpenAI.Chat;
+using System.Text;
 
 namespace DefendingChampionsBot
 {
@@ -23,7 +24,7 @@ namespace DefendingChampionsBot
         public static readonly ChatClient GPT4o = Client.GetChatClient(OpenAIModel.GPT4o.ToModelString());
         public static readonly ChatClient GPT4_1 = Client.GetChatClient(OpenAIModel.GPT4_1.ToModelString());
 
-        public static readonly string SystemMessage = "You are solving a Wordle-like game.";
+        public static readonly string SystemMessage = GetSystemMessage();
         public static readonly ChatCompletionOptions ChatCompletionOptions = new ChatCompletionOptions()
         {
 #pragma warning disable OPENAI001
@@ -42,6 +43,24 @@ namespace DefendingChampionsBot
                 OpenAIModel.GPT4_1 => "gpt-4.1",
                 _ => throw new ArgumentOutOfRangeException(nameof(model))
             };
+        }
+
+        private static string GetSystemMessage()
+        {
+            return
+@"You are an AI decision engine for a Mafia Game. Mafia are represented by the term Raven.
+Your ONLY task is to analyze the provided game state and answer the user's question by returning exactly ONE PlayerId.
+
+Rules:
+1. Respond ONLY with a valid PlayerId from the provided data.
+2. Never pick a dead player. Always choose from AlivePlayers only.
+3. Never return MyId as the answer.
+4. Do NOT include explanations, reasoning, or extra text.
+5. If the question is about suggesting a player (e.g., whom to eliminate, investigate, protect, suspect, etc.), choose exactly one PlayerId.
+6. When MyRole is Raven, prioritize eliminating Doctor/Detective before Villager.
+7. When MyRole is Detective, do not pick Villagers, do not pick dead players, and do not return MyId.
+8. Use the game data exactly as provided in the user prompt.
+9. Never create new players or repeat the question.";
         }
     }
 }

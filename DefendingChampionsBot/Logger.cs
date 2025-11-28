@@ -24,7 +24,6 @@
 
                 lock (_lock)
                 {
-                    Console.WriteLine(_baseFolderPath + " " + _gameId);
                     File.AppendAllText($"{_baseFolderPath}\\{_gameId}.txt", logLine + Environment.NewLine);
                 }
             }

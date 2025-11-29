@@ -47,6 +47,7 @@ namespace DefendingChampionsBot.Raven
 
     public class RavenGameInfo
     {
+        public string PlayerSelectedByRaven = "";
         public bool FoundOtherRaven = false;
         public string MyId { get; set; } = "";
         public string MyRole { get; set; } = "";
@@ -124,6 +125,7 @@ Important: Respond with exactly ONE PlayerId from the provided data.";
 
             sb.AppendLine("--- GameState Log ---");
 
+            sb.AppendLine($"PlayerSelectedByRaven: {PlayerSelectedByRaven}");
             sb.AppendLine($"FoundOtherRaven: {FoundOtherRaven}");
             sb.AppendLine($"MyId: {MyId}");
             sb.AppendLine($"MyRole: {MyRole}");

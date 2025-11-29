@@ -184,7 +184,94 @@ namespace DefendingChampionsBot.Raven
             }
         }
 
-        
+        public void HandleRavenComment(RavenDto ravenDto)
+        {
+            RavenGameInfo ravenGameInfo = RavenWarehouse.GetGameInfo(ravenDto.GameId!);
+            List<string> firstRavenVotes = new List<string>();
+            List<string> secondRavenVotes = new List<string>();
+
+            try
+            {
+                if (ravenDto.Discussions.Count == 1)
+                {
+                    var firstDiscussion = ravenDto.Discussions.First();
+                    firstDiscussion.TryGetValue("votes", out var firstVotes);
+                    firstRavenVotes = JsonSerializer.Deserialize<List<string>>((string)firstVotes!);
+                    ravenGameInfo.PlayerSelectedByRaven = firstRavenVotes[0];
+                    return;
+                }
+                if (ravenDto.Discussions.Count == 2)
+                {
+                    var firstDiscussion = ravenDto.Discussions.First();
+                    firstDiscussion.TryGetValue("playerId", out var playerId);
+                    firstDiscussion.TryGetValue("votes", out var firstVotes);
+                    firstRavenVotes = JsonSerializer.Deserialize<List<string>>((string)firstVotes!);
+
+                    var secondDiscussion = ravenDto.Discussions.Last();
+                    secondDiscussion.TryGetValue("votes", out var secondVotes);
+                    secondRavenVotes = JsonSerializer.Deserialize<List<string>>((string)secondVotes!);
+
+
+                    firstRavenVotes = firstRavenVotes.Intersect(ravenGameInfo.PlayersAlive).ToList();
+                    secondRavenVotes = secondRavenVotes.Intersect(ravenGameInfo.PlayersAlive).ToList();
+
+                    List<string> topRankedPlayers = GetTopRankedPlayers(firstRavenVotes!, secondRavenVotes!);
+                    if (topRankedPlayers.Count == 1)
+                    {
+                        ravenGameInfo.PlayerSelectedByRaven = topRankedPlayers[0];
+                    }
+                    else
+                    {
+                        foreach (var vote in firstRavenVotes!)
+                        {
+                            if (topRankedPlayers.Contains(vote))
+                            {
+                                ravenGameInfo.PlayerSelectedByRaven = vote;
+                                break;
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogInfo($"Error during HandleRavenComment {ex.Message}");
+                ravenDto.Log(logger);
+            }
+        }
+
+        public static List<string> GetTopRankedPlayers(List<string> list1, List<string> list2)
+        {
+            var scores = new Dictionary<string, int>();
+
+            void ApplyWeights(List<string> lst)
+            {
+                int weight = lst.Count;
+                for (int i = 0; i < lst.Count; i++)
+                {
+                    string player = lst[i];
+                    int w = weight - i;
+
+                    if (scores.ContainsKey(player))
+                        scores[player] += w;
+                    else
+                        scores[player] = w;
+                }
+            }
+
+            ApplyWeights(list1);
+            ApplyWeights(list2);
+
+            int maxScore = scores.Values.Max();
+
+            return scores
+                .Where(x => x.Value == maxScore)
+                .Select(x => x.Key)
+                .ToList();
+        }
+
+
 
         public async Task UpdateRavenGameInfoBasedOnGameStart(RavenDto ravenDto)
         {
@@ -242,7 +329,11 @@ namespace DefendingChampionsBot.Raven
                         ravenGameInfo.PlayersDead.Add(pl["id"].ToString()!);
                         if ((string)pl["lynchedBy"] == "Raven")
                         {
-                            ravenGameInfo.Villagers.Add(pl["id"].ToString()!);
+                            if (!ravenGameInfo.Villagers.Contains(pl["id"].ToString()!))
+                            {
+                                ravenGameInfo.Villagers.Add(pl["id"].ToString()!);
+                            }
+                            
                         }
                     }
                 }

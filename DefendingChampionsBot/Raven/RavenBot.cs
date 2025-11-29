@@ -28,6 +28,7 @@ namespace DefendingChampionsBot.Raven
 
                 engine = new RavenEngine(logger);
                 Dictionary<string, object> outgoing = null;
+                RavenGameInfo ravenGameInfo = RavenWarehouse.GetGameInfo(ravenDto.GameId!);
 
                 switch (ravenDto.Type)
                 {
@@ -85,7 +86,6 @@ namespace DefendingChampionsBot.Raven
 
 
                     case "morning-discussion":
-                        RavenGameInfo ravenGameInfo = RavenWarehouse.GetGameInfo(ravenDto.GameId!);
                         try
                         {
                             if (ravenGameInfo.PlayersAlive!.Count == 2)
@@ -127,6 +127,7 @@ namespace DefendingChampionsBot.Raven
                         return;
 
                     case "raven-comment":
+                        engine.HandleRavenComment(ravenDto);
                         return;
 
                     case "ack-night-investigation":
@@ -138,6 +139,17 @@ namespace DefendingChampionsBot.Raven
                         return;
 
                     case "phase-result":
+                        try
+                        {
+                            if (string.IsNullOrEmpty(ravenDto.PlayerLynched) && !ravenGameInfo.Doctors.Contains(ravenGameInfo.PlayerSelectedByRaven))
+                            {
+                                ravenGameInfo.Doctors.Add(ravenGameInfo.PlayerSelectedByRaven);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogInfo($"Error: In phase-result {ex.Message}");
+                        }
                         return;
 
                     case "game-result":
